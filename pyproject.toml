@@ -1,0 +1,44 @@
+[tool.poetry]
+name = "test-lightrag"
+version = "0.1.0"
+description = ""
+authors = ["amrit lal singh <amritlalsingh9920@kgpian.iitkgp.ac.in>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"  # Change this line from <4.0 to <3.13
+accelerate = "^1.2.1"
+aioboto3 = "^13.3.0"
+aiofiles = "^24.1.0"
+aiohttp = "^3.11.11"
+asyncpg = "^0.30.0"
+gremlinpython = "^3.7.3"
+hnswlib = "^0.8.0"
+nano-vectordb = "^0.0.4.3"
+neo4j = "^5.27.0"
+networkx = "^3.4.2"
+numpy = "^2.2.1"
+ollama = "^0.4.5"
+openai = "^1.59.4"
+oracledb = "^2.5.1"
+psycopg-pool = "^3.2.4"
+psycopg = {extras = ["binary", "pool"], version = "^3.2.3"}
+pydantic = "^2.10.4"
+pymilvus = "^2.5.3"
+pymongo = "^4.10.1"
+pymysql = "^1.1.1"
+python-dotenv = "^1.0.1"
+pyvis = "^0.3.2"
+setuptools = "^75.7.0"
+sqlalchemy = "^2.0.36"
+tenacity = "^9.0.0"
+tiktoken = "^0.8.0"
+tqdm = "^4.67.1"
+transformers = "^4.47.1"
+xxhash = "^3.5.0"
+lightrag-hku = "^1.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
