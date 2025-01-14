@@ -141,12 +141,12 @@ class LightRAG:
 
     # text chunking
     chunk_token_size: int = 1200
-    chunk_overlap_token_size: int = 100
+    chunk_overlap_token_size: int = 300
     tiktoken_model_name: str = "gpt-4o-mini"
 
     # entity extraction
     entity_extract_max_gleaning: int = 1
-    entity_summary_to_max_tokens: int = 500
+    entity_summary_to_max_tokens: int = 1000
 
     # node embedding
     node_embedding_algorithm: str = "node2vec"
@@ -170,7 +170,7 @@ class LightRAG:
     llm_model_func: callable = gpt_4o_mini_complete  # hf_model_complete#
     llm_model_name: str = "meta-llama/Llama-3.2-1B-Instruct"  # 'meta-llama/Llama-3.2-1B'#'google/gemma-2-2b-it'
     llm_model_max_token_size: int = 32768
-    llm_model_max_async: int = 16
+    llm_model_max_async: int = 32
     llm_model_kwargs: dict = field(default_factory=dict)
 
     # storage
@@ -332,7 +332,7 @@ class LightRAG:
 
         # 1. Remove duplicate contents from the list
         unique_contents = list(set(doc.strip() for doc in string_or_strings))
-
+        print(f"Unique contents: length {len(unique_contents)}")
         # 2. Generate document IDs and initial status
         new_docs = {
             compute_mdhash_id(content, prefix="doc-"): {
@@ -353,9 +353,9 @@ class LightRAG:
         if not new_docs:
             logger.info("All documents have been processed or are duplicates")
             return
-
-        logger.info(f"Processing {len(new_docs)} new unique documents")
-
+        print("--------------------------------")
+        print(f"Processing {len(new_docs)} new unique documents")
+        print("--------------------------------")
         # Process documents in batches
         batch_size = self.addon_params.get("insert_batch_size", 10)
         for i in range(0, len(new_docs), batch_size):
@@ -389,6 +389,8 @@ class LightRAG:
                             tiktoken_model=self.tiktoken_model_name,
                         )
                     }
+                    print(f"Chunks: length {len(chunks)}")
+                    print("--------------------------------")
 
                     # Update status with chunks information
                     doc_status.update(

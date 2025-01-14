@@ -6,7 +6,7 @@ from lightrag.utils import EmbeddingFunc
 
 # Working directory and the directory path for text files
 WORKING_DIR = "./dickens"
-TEXT_FILES_DIR = "/llm/mt"
+TEXT_FILES_DIR = "./textfiles"
 
 # Create the working directory if it doesn't exist
 if not os.path.exists(WORKING_DIR):
@@ -16,7 +16,7 @@ if not os.path.exists(WORKING_DIR):
 rag = LightRAG(
     working_dir=WORKING_DIR,
     llm_model_func=ollama_model_complete,
-    llm_model_name="qwen2.5:3b-instruct-max-context",
+    llm_model_name="smallthinker",
     embedding_func=EmbeddingFunc(
         embedding_dim=768,
         max_token_size=8192,

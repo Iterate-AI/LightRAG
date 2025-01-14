@@ -68,19 +68,28 @@ def chunking_by_token_size(
                 }
             )
     else:
-        for index, start in enumerate(
-            range(0, len(tokens), max_token_size - overlap_token_size)
-        ):
-            chunk_content = decode_tokens_by_tiktoken(
-                tokens[start : start + max_token_size], model_name=tiktoken_model
-            )
+        raw_chunks = []
+        current_chunk = ""
+        for line in content.split("\n"):
+            if "----####^_^####----" in line:
+                if current_chunk:
+                    raw_chunks.append(current_chunk)
+                current_chunk = ""
+            else:
+                current_chunk += line + "\n"
+        if current_chunk:
+            raw_chunks.append(current_chunk)
+        print(f"Raw chunks: {len(raw_chunks)}")
+        for index, chunk in enumerate(raw_chunks):
+            _tokens = encode_string_by_tiktoken(chunk, model_name=tiktoken_model)
             results.append(
                 {
-                    "tokens": min(max_token_size, len(tokens) - start),
-                    "content": chunk_content.strip(),
+                    "tokens": len(_tokens),
+                    "content": chunk.strip(),
                     "chunk_order_index": index,
                 }
             )
+            
     return results
 
 
@@ -316,8 +325,9 @@ async def extract_entities(
     )
     # add example's format
     examples = examples.format(**example_context_base)
-
+    examples = examples.replace("{", "{{").replace("}", "}}")
     entity_extract_prompt = PROMPTS["entity_extraction"]
+
     context_base = dict(
         tuple_delimiter=PROMPTS["DEFAULT_TUPLE_DELIMITER"],
         record_delimiter=PROMPTS["DEFAULT_RECORD_DELIMITER"],

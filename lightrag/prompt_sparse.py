@@ -9,12 +9,13 @@ PROMPTS["DEFAULT_COMPLETION_DELIMITER"] = "<|COMPLETE|>"
 PROMPTS["process_tickers"] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 
 PROMPTS["DEFAULT_ENTITY_TYPES"] = [
-    "component", "hook", "state", "prop_type", "ui_element", 
-    "route", "data_handler", "style_definition", "utility", "test", "mixpanel", "filepath"
+    "function",          # Any reusable function/utility/hook
+    "ui_component",      # Visible UI elements and components
+    "mixpanel"         # Analytics and tracking
 ]
 
 PROMPTS["entity_extraction"] = """-Goal-
-Given a React/Frontend code snippet, identify all entities and their relationships to construct a knowledge graph of the codebase.
+Given a React/Frontend code snippet, only extract major entities focus on entities that renders something and their relationships to construct a knowledge graph of the codebase.
 Use {language} as output language.
 
 -Steps-
@@ -28,6 +29,8 @@ Use {language} as output language.
   * Key dependencies
   * Notable patterns used
   * Implementation type/category (e.g., functional component, class component)
+  * Its role in the UI, and what does it renders
+  * Mixpanel related detailed information if mixpanel is present
 Format each entity as ("entity"{tuple_delimiter}<entity_name>{tuple_delimiter}<entity_type>{tuple_delimiter}<entity_description>)
 
 2. From the entities identified in step 1, identify all pairs of (source_entity, target_entity) that are *clearly related* to each other.
@@ -48,8 +51,6 @@ For each pair of related entities, extract:
   * STYLES_COMPONENT: Styling relationships
   * ROUTES_TO: Routing connections
   * TESTS: Testing relationships
-  * FILE_IMPORTS_FUNCTION: File imports function or react component
-  * FILE_CONTAINS_FUNCTION: File contains function or react component
   * CUSTOM:<relationship_name>: For relationships that don't fit the predefined types
 Format each relationship as ("relationship"{tuple_delimiter}<source_entity>{tuple_delimiter}<target_entity>{tuple_delimiter}<relationship_description>{tuple_delimiter}<relationship_keywords>{tuple_delimiter}<relationship_strength>)
 
@@ -73,143 +74,112 @@ Text: {input_text}
 ######################
 Output:
 """
-
 PROMPTS["entity_extraction_examples"] = [
     """Example 1:
 
-Entity_types: [component, hook, state, prop_type, ui_element, route, data_handler, style_definition, utility, test, mixpanel, filepath]
+Entity_types: [function, ui_component, mixpanel]
 Text: 
-``` filepath: src/components/controls/Button.jsx
-import {{ useButtonStyles }} from '../styles/buttonStyles';
+function UserProfile({{ userId, theme }}) {{
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    
+    useEffect(() => {{
+        async function fetchUserData() {{
+            setLoading(true);
+            const data = await getUserById(userId);
+            setUser(data);
+            setLoading(false);
+        }}
+        fetchUserData();
+    }}, [userId]);
 
-const Button = ({{ onClick, children, variant = 'primary' }}) => {{
-    const buttonStyles = useButtonStyles(variant);
+    if (loading) return <Spinner />;
     
     return (
-        <button 
-            className={{buttonStyles}}
-            onClick={{onClick}}
-        >
-            {{children}}
-        </button>
+        <Card className={{styles.profileCard}}>
+            <UserAvatar src={{user.avatar}} />
+            <UserDetails user={{user}} theme={{theme}} />
+        </Card>
     );
-}};
-
-export default Button;
-```
-
-``` filepath: src/components/styles/buttonStyles.js
-import {{ makeStyles }} from '@mui/styles';
-
-const variantStyles = {{
-    primary: {{
-        backgroundColor: '#007bff',
-        color: 'white'
-    }},
-    secondary: {{
-        backgroundColor: '#6c757d',
-        color: 'white'
-    }}
-}};
-
-export const useButtonStyles = (variant) => {{
-    const baseStyles = {{
-        padding: '8px 16px',
-        borderRadius: '4px',
-        border: 'none',
-        cursor: 'pointer'
-    }};
-    
-    return makeStyles({{
-        ...baseStyles,
-        ...variantStyles[variant]
-    }})();
-}};
-```
+}}
 
 ################
 Output:
-("entity"{tuple_delimiter}"src/components/controls/Button.jsx"{tuple_delimiter}"filepath"{tuple_delimiter}"File containing the Button component implementation"){record_delimiter}
-("entity"{tuple_delimiter}"src/components/styles/buttonStyles.js"{tuple_delimiter}"filepath"{tuple_delimiter}"File containing button styling logic and variant definitions"){record_delimiter}
-("entity"{tuple_delimiter}"Button"{tuple_delimiter}"component"{tuple_delimiter}"Reusable button component that accepts onClick handler, children content, and variant prop for styling. Implements a functional component pattern."){record_delimiter}
-("entity"{tuple_delimiter}"useButtonStyles"{tuple_delimiter}"hook"{tuple_delimiter}"Custom hook for managing button styling based on variant. Provides primary and secondary variants with predefined styles."){record_delimiter}
-("entity"{tuple_delimiter}"variantStyles"{tuple_delimiter}"style_definition"{tuple_delimiter}"Style configuration object defining visual properties for different button variants"){record_delimiter}
-("relationship"{tuple_delimiter}"src/components/controls/Button.jsx"{tuple_delimiter}"Button"{tuple_delimiter}"File contains Button component implementation"{tuple_delimiter}"FILE_CONTAINS_FUNCTION"{tuple_delimiter}10){record_delimiter}
-("relationship"{tuple_delimiter}"src/components/styles/buttonStyles.js"{tuple_delimiter}"useButtonStyles"{tuple_delimiter}"File contains button styling hook implementation"{tuple_delimiter}"FILE_CONTAINS_FUNCTION"{tuple_delimiter}10){record_delimiter}
-("relationship"{tuple_delimiter}"src/components/styles/buttonStyles.js"{tuple_delimiter}"variantStyles"{tuple_delimiter}"File contains style definitions for button variants"{tuple_delimiter}"FILE_CONTAINS_FUNCTION"{tuple_delimiter}9){record_delimiter}
-("relationship"{tuple_delimiter}"Button"{tuple_delimiter}"useButtonStyles"{tuple_delimiter}"Component imports and uses styling hook for variant-based styles"{tuple_delimiter}"IMPORTS,CALLS_HOOK"{tuple_delimiter}8){record_delimiter}
-("relationship"{tuple_delimiter}"useButtonStyles"{tuple_delimiter}"variantStyles"{tuple_delimiter}"Hook uses variant style definitions to generate final styles"{tuple_delimiter}"STYLES_COMPONENT"{tuple_delimiter}7){record_delimiter}
-("content_keywords"{tuple_delimiter}"component composition, custom hooks, styling variants, material-ui integration, style organization, reusable UI component"){completion_delimiter}
+("entity"{tuple_delimiter}"UserProfile"{tuple_delimiter}"function"{tuple_delimiter}"React functional component that manages user profile data fetching and display. Handles loading states and user data through hooks."){record_delimiter}
+("entity"{tuple_delimiter}"fetchUserData"{tuple_delimiter}"function"{tuple_delimiter}"Internal async function that handles user data fetching and state updates."){record_delimiter}
+("entity"{tuple_delimiter}"Spinner"{tuple_delimiter}"ui_component"{tuple_delimiter}"Loading indicator component displayed during data fetching states."){record_delimiter}
+("entity"{tuple_delimiter}"Card"{tuple_delimiter}"ui_component"{tuple_delimiter}"Container component that wraps profile content with styling."){record_delimiter}
+("entity"{tuple_delimiter}"UserAvatar"{tuple_delimiter}"ui_component"{tuple_delimiter}"Visual component displaying the user's avatar image."){record_delimiter}
+("entity"{tuple_delimiter}"UserDetails"{tuple_delimiter}"ui_component"{tuple_delimiter}"Component that renders detailed user information with theme support."){record_delimiter}
+("relationship"{tuple_delimiter}"UserProfile"{tuple_delimiter}"fetchUserData"{tuple_delimiter}"UserProfile contains and calls fetchUserData for data fetching"{tuple_delimiter}"CALLS_HOOK"{tuple_delimiter}9){record_delimiter}
+("relationship"{tuple_delimiter}"UserProfile"{tuple_delimiter}"Spinner"{tuple_delimiter}"UserProfile conditionally renders Spinner during loading"{tuple_delimiter}"RENDERS"{tuple_delimiter}7){record_delimiter}
+("relationship"{tuple_delimiter}"UserProfile"{tuple_delimiter}"Card"{tuple_delimiter}"UserProfile renders Card as main container"{tuple_delimiter}"RENDERS"{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"Card"{tuple_delimiter}"UserAvatar"{tuple_delimiter}"Card renders UserAvatar as child component"{tuple_delimiter}"RENDERS"{tuple_delimiter}6){record_delimiter}
+("relationship"{tuple_delimiter}"Card"{tuple_delimiter}"UserDetails"{tuple_delimiter}"Card renders UserDetails as child component"{tuple_delimiter}"RENDERS"{tuple_delimiter}6){record_delimiter}
+("content_keywords"{tuple_delimiter}"functional components, async operations, component hierarchy, conditional rendering"){completion_delimiter}
 #############################""",
 
     """Example 2:
 
-Entity_types: [component, hook, state, prop_type, ui_element, route, data_handler, style_definition, utility, test, mixpanel, filepath]
+Entity_types: [function, ui_component, mixpanel]
 Text: 
-``` filepath: src/components/controls/PaddingSlider.jsx
-import {{ Slider }} from '@mui/material';
-import {{ useCallback }} from 'react';
-import {{ validatePadding }} from '../utils/validators';
+const useAuth = () => {{
+    const [user, setUser] = useState(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const navigate = useNavigate();
 
-const PaddingSlider = ({{ value, onChange, direction = 'all' }}) => {{
-    const handleChange = useCallback((event, newValue) => {{
-        if (validatePadding(newValue)) {{
-            onChange({{ direction, value: newValue }});
+    const login = async (credentials) => {{
+        try {{
+            const response = await authService.login(credentials);
+            setUser(response.user);
+            setIsAuthenticated(true);
+            navigate('/dashboard');
+        }} catch (error) {{
+            throw new Error('Authentication failed');
         }}
-    }}, [direction, onChange]);
+    }};
 
-    return (
-        <div className="padding-slider">
-            <label>{{`Padding ${{direction}}`}}</label>
-            <Slider
-                value={{value}}
-                onChange={{handleChange}}
-                min={{0}}
-                max={{100}}
-                step={{1}}
-            />
-        </div>
-    );
+    const logout = () => {{
+        setUser(null);
+        setIsAuthenticated(false);
+        navigate('/login');
+    }};
+
+    return {{ user, isAuthenticated, login, logout }};
 }};
-
-export default PaddingSlider;
-```
-
-``` filepath: src/components/utils/validators.js
-export const validatePadding = (value) => {{
-    return value >= 0 && value <= 100 && Number.isInteger(value);
-}};
-
-export const validateSpacing = (value) => {{
-    return value >= 0 && value <= 50 && Number.isInteger(value);
-}};
-```
+""" + """
 ################
 Output:
-("entity"{tuple_delimiter}"src/components/controls/PaddingSlider.jsx"{tuple_delimiter}"filepath"{tuple_delimiter}"File containing the PaddingSlider component for padding control"){record_delimiter}
-("entity"{tuple_delimiter}"src/components/utils/validators.js"{tuple_delimiter}"filepath"{tuple_delimiter}"Utility file containing validation functions for spacing and padding"){record_delimiter}
-("entity"{tuple_delimiter}"PaddingSlider"{tuple_delimiter}"component"{tuple_delimiter}"Control component for adjusting padding values. Accepts value, onChange, and direction props. Implements Material-UI Slider with validation."){record_delimiter}
-("entity"{tuple_delimiter}"handleChange"{tuple_delimiter}"data_handler"{tuple_delimiter}"Memoized callback function that validates and processes slider value changes"){record_delimiter}
-("entity"{tuple_delimiter}"Slider"{tuple_delimiter}"ui_element"{tuple_delimiter}"Material-UI Slider component used for input"){record_delimiter}
-("entity"{tuple_delimiter}"validatePadding"{tuple_delimiter}"utility"{tuple_delimiter}"Validation function that ensures padding values are integers between 0 and 100"){record_delimiter}
-("entity"{tuple_delimiter}"validateSpacing"{tuple_delimiter}"utility"{tuple_delimiter}"Validation function that ensures spacing values are integers between 0 and 50"){record_delimiter}
-("relationship"{tuple_delimiter}"src/components/controls/PaddingSlider.jsx"{tuple_delimiter}"PaddingSlider"{tuple_delimiter}"File contains PaddingSlider component implementation"{tuple_delimiter}"FILE_CONTAINS_FUNCTION"{tuple_delimiter}10){record_delimiter}
-("relationship"{tuple_delimiter}"src/components/utils/validators.js"{tuple_delimiter}"validatePadding"{tuple_delimiter}"File contains padding validation function"{tuple_delimiter}"FILE_CONTAINS_FUNCTION"{tuple_delimiter}10){record_delimiter}
-("relationship"{tuple_delimiter}"src/components/utils/validators.js"{tuple_delimiter}"validateSpacing"{tuple_delimiter}"File contains spacing validation function"{tuple_delimiter}"FILE_CONTAINS_FUNCTION"{tuple_delimiter}10){record_delimiter}
-("relationship"{tuple_delimiter}"PaddingSlider"{tuple_delimiter}"validatePadding"{tuple_delimiter}"Component uses validation function to verify padding values"{tuple_delimiter}"FILE_IMPORTS_FUNCTION"{tuple_delimiter}8){record_delimiter}
-("relationship"{tuple_delimiter}"PaddingSlider"{tuple_delimiter}"Slider"{tuple_delimiter}"Component uses Material-UI Slider for input"{tuple_delimiter}"IMPORTS,RENDERS"{tuple_delimiter}9){record_delimiter}
-("relationship"{tuple_delimiter}"PaddingSlider"{tuple_delimiter}"handleChange"{tuple_delimiter}"Component uses memoized handler for slider changes"{tuple_delimiter}"HANDLES_EVENT"{tuple_delimiter}8){record_delimiter}
-("relationship"{tuple_delimiter}"handleChange"{tuple_delimiter}"validatePadding"{tuple_delimiter}"Handler uses validation before updating values"{tuple_delimiter}"CALLS_HOOK"{tuple_delimiter}7){record_delimiter}
-("content_keywords"{tuple_delimiter}"UI controls, material-ui integration, callback memoization, controlled component, input validation, utility functions"){completion_delimiter}
+("entity"{tuple_delimiter}"useAuth"{tuple_delimiter}"function"{tuple_delimiter}"Custom hook managing authentication state and operations. Provides login/logout functionality with navigation."){record_delimiter}
+("entity"{tuple_delimiter}"login"{tuple_delimiter}"function"{tuple_delimiter}"Async function handling user authentication, state updates, and navigation."){record_delimiter}
+("entity"{tuple_delimiter}"logout"{tuple_delimiter}"function"{tuple_delimiter}"Function handling user logout process, state clearing, and navigation."){record_delimiter}
+("entity"{tuple_delimiter}"authService.login"{tuple_delimiter}"function"{tuple_delimiter}"External authentication service function for user login."){record_delimiter}
+("relationship"{tuple_delimiter}"useAuth"{tuple_delimiter}"login"{tuple_delimiter}"useAuth contains and exposes login function"{tuple_delimiter}"CALLS_HOOK"{tuple_delimiter}9){record_delimiter}
+("relationship"{tuple_delimiter}"useAuth"{tuple_delimiter}"logout"{tuple_delimiter}"useAuth contains and exposes logout function"{tuple_delimiter}"CALLS_HOOK"{tuple_delimiter}9){record_delimiter}
+("relationship"{tuple_delimiter}"login"{tuple_delimiter}"authService.login"{tuple_delimiter}"login function calls authService.login"{tuple_delimiter}"CALLS_HOOK"{tuple_delimiter}8){record_delimiter}
+("content_keywords"{tuple_delimiter}"custom hooks, authentication flow, state management, navigation"){completion_delimiter}
 #############################"""]
 
 PROMPTS[
     "summarize_entity_descriptions"
 ] = """You are a helpful assistant responsible for generating a comprehensive summary of the data provided below.
-Given React components, hooks, or other frontend entities, and a list of descriptions related to them.
-Please concatenate all of these into a single, comprehensive description. Make sure to include information collected from all the descriptions.
-If the provided descriptions are contradictory, please resolve the contradictions and provide a single, coherent summary.
-Make sure it is written in third person, and include the component/hook names so we have the full context.
+Given one or two React components, hooks, or other frontend entities, and a list of descriptions related to them.
+Please concatenate all of these into a single, comprehensive description. Make sure to include:
+
+- Core functionality and purpose
+- Props/parameters accepted and their usage
+- State management approach and any hooks used
+- Key dependencies and imported functions/components
+- CSS/styling details including:
+  * CSS classes and styles applied
+  * Layout and positioning
+  * Responsive design considerations
+  * Visual effects and animations
+- What the component renders (DOM elements, child components)
+- Notable patterns or implementation approaches used
+- Event handlers and user interactions
+
+Make sure to include the component/hook names so we have the full context and output a very short concentrated and concise description.
 Use {language} as output language.
 
 #######

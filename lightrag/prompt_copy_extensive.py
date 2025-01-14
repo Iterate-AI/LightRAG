@@ -10,7 +10,7 @@ PROMPTS["process_tickers"] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "
 
 PROMPTS["DEFAULT_ENTITY_TYPES"] = [
     "component", "hook", "state", "prop_type", "ui_element", 
-    "route", "data_handler", "style_definition", "utility", "test", "mixpanel", "filepath"
+    "route", "data_handler", "style_definition", "utility", "test", "mixpanel"
 ]
 
 PROMPTS["entity_extraction"] = """-Goal-
@@ -48,8 +48,6 @@ For each pair of related entities, extract:
   * STYLES_COMPONENT: Styling relationships
   * ROUTES_TO: Routing connections
   * TESTS: Testing relationships
-  * FILE_IMPORTS_FUNCTION: File imports function or react component
-  * FILE_CONTAINS_FUNCTION: File contains function or react component
   * CUSTOM:<relationship_name>: For relationships that don't fit the predefined types
 Format each relationship as ("relationship"{tuple_delimiter}<source_entity>{tuple_delimiter}<target_entity>{tuple_delimiter}<relationship_description>{tuple_delimiter}<relationship_keywords>{tuple_delimiter}<relationship_strength>)
 
@@ -77,136 +75,99 @@ Output:
 PROMPTS["entity_extraction_examples"] = [
     """Example 1:
 
-Entity_types: [component, hook, state, prop_type, ui_element, route, data_handler, style_definition, utility, test, mixpanel, filepath]
+Entity_types: [component, hook, state, prop_type, ui_element, route, data_handler, style_definition, utility, test]
 Text: 
-``` filepath: src/components/controls/Button.jsx
-import {{ useButtonStyles }} from '../styles/buttonStyles';
+function UserProfile({{ userId, theme }}) {{
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    
+    useEffect(() => {{
+        async function fetchUserData() {{
+            setLoading(true);
+            const data = await getUserById(userId);
+            setUser(data);
+            setLoading(false);
+        }}
+        fetchUserData();
+    }}, [userId]);
 
-const Button = ({{ onClick, children, variant = 'primary' }}) => {{
-    const buttonStyles = useButtonStyles(variant);
+    if (loading) return <Spinner />;
     
     return (
-        <button 
-            className={{buttonStyles}}
-            onClick={{onClick}}
-        >
-            {{children}}
-        </button>
+        <Card className={{styles.profileCard}}>
+            <UserAvatar src={{user.avatar}} />
+            <UserDetails user={{user}} theme={{theme}} />
+        </Card>
     );
-}};
-
-export default Button;
-```
-
-``` filepath: src/components/styles/buttonStyles.js
-import {{ makeStyles }} from '@mui/styles';
-
-const variantStyles = {{
-    primary: {{
-        backgroundColor: '#007bff',
-        color: 'white'
-    }},
-    secondary: {{
-        backgroundColor: '#6c757d',
-        color: 'white'
-    }}
-}};
-
-export const useButtonStyles = (variant) => {{
-    const baseStyles = {{
-        padding: '8px 16px',
-        borderRadius: '4px',
-        border: 'none',
-        cursor: 'pointer'
-    }};
-    
-    return makeStyles({{
-        ...baseStyles,
-        ...variantStyles[variant]
-    }})();
-}};
-```
+}}
 
 ################
 Output:
-("entity"{tuple_delimiter}"src/components/controls/Button.jsx"{tuple_delimiter}"filepath"{tuple_delimiter}"File containing the Button component implementation"){record_delimiter}
-("entity"{tuple_delimiter}"src/components/styles/buttonStyles.js"{tuple_delimiter}"filepath"{tuple_delimiter}"File containing button styling logic and variant definitions"){record_delimiter}
-("entity"{tuple_delimiter}"Button"{tuple_delimiter}"component"{tuple_delimiter}"Reusable button component that accepts onClick handler, children content, and variant prop for styling. Implements a functional component pattern."){record_delimiter}
-("entity"{tuple_delimiter}"useButtonStyles"{tuple_delimiter}"hook"{tuple_delimiter}"Custom hook for managing button styling based on variant. Provides primary and secondary variants with predefined styles."){record_delimiter}
-("entity"{tuple_delimiter}"variantStyles"{tuple_delimiter}"style_definition"{tuple_delimiter}"Style configuration object defining visual properties for different button variants"){record_delimiter}
-("relationship"{tuple_delimiter}"src/components/controls/Button.jsx"{tuple_delimiter}"Button"{tuple_delimiter}"File contains Button component implementation"{tuple_delimiter}"FILE_CONTAINS_FUNCTION"{tuple_delimiter}10){record_delimiter}
-("relationship"{tuple_delimiter}"src/components/styles/buttonStyles.js"{tuple_delimiter}"useButtonStyles"{tuple_delimiter}"File contains button styling hook implementation"{tuple_delimiter}"FILE_CONTAINS_FUNCTION"{tuple_delimiter}10){record_delimiter}
-("relationship"{tuple_delimiter}"src/components/styles/buttonStyles.js"{tuple_delimiter}"variantStyles"{tuple_delimiter}"File contains style definitions for button variants"{tuple_delimiter}"FILE_CONTAINS_FUNCTION"{tuple_delimiter}9){record_delimiter}
-("relationship"{tuple_delimiter}"Button"{tuple_delimiter}"useButtonStyles"{tuple_delimiter}"Component imports and uses styling hook for variant-based styles"{tuple_delimiter}"IMPORTS,CALLS_HOOK"{tuple_delimiter}8){record_delimiter}
-("relationship"{tuple_delimiter}"useButtonStyles"{tuple_delimiter}"variantStyles"{tuple_delimiter}"Hook uses variant style definitions to generate final styles"{tuple_delimiter}"STYLES_COMPONENT"{tuple_delimiter}7){record_delimiter}
-("content_keywords"{tuple_delimiter}"component composition, custom hooks, styling variants, material-ui integration, style organization, reusable UI component"){completion_delimiter}
+("entity"{tuple_delimiter}"UserProfile"{tuple_delimiter}"component"{tuple_delimiter}"React functional component that displays user profile data. Accepts userId and theme props. Uses loading state for data fetching."){record_delimiter}
+("entity"{tuple_delimiter}"user state"{tuple_delimiter}"state"{tuple_delimiter}"useState hook managing user data fetched from API."){record_delimiter}
+("entity"{tuple_delimiter}"loading state"{tuple_delimiter}"state"{tuple_delimiter}"useState hook managing loading state during data fetch."){record_delimiter}
+("entity"{tuple_delimiter}"fetchUserData"{tuple_delimiter}"data_handler"{tuple_delimiter}"Async function that fetches user data and updates component state."){record_delimiter}
+("entity"{tuple_delimiter}"Spinner"{tuple_delimiter}"ui_element"{tuple_delimiter}"Loading indicator component shown during data fetch."){record_delimiter}
+("entity"{tuple_delimiter}"Card"{tuple_delimiter}"ui_element"{tuple_delimiter}"Container component for profile display."){record_delimiter}
+("entity"{tuple_delimiter}"UserAvatar"{tuple_delimiter}"component"{tuple_delimiter}"Component displaying user's avatar image."){record_delimiter}
+("entity"{tuple_delimiter}"UserDetails"{tuple_delimiter}"component"{tuple_delimiter}"Component displaying detailed user information."){record_delimiter}
+("relationship"{tuple_delimiter}"UserProfile"{tuple_delimiter}"user state"{tuple_delimiter}"Component manages user data state"{tuple_delimiter}"UPDATES_STATE"{tuple_delimiter}9){record_delimiter}
+("relationship"{tuple_delimiter}"UserProfile"{tuple_delimiter}"loading state"{tuple_delimiter}"Component manages loading state"{tuple_delimiter}"UPDATES_STATE"{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"UserProfile"{tuple_delimiter}"Spinner"{tuple_delimiter}"Conditionally renders loading indicator"{tuple_delimiter}"RENDERS"{tuple_delimiter}7){record_delimiter}
+("relationship"{tuple_delimiter}"UserProfile"{tuple_delimiter}"Card"{tuple_delimiter}"Renders as main container"{tuple_delimiter}"RENDERS"{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"Card"{tuple_delimiter}"UserAvatar"{tuple_delimiter}"Contains avatar component"{tuple_delimiter}"RENDERS"{tuple_delimiter}6){record_delimiter}
+("relationship"{tuple_delimiter}"Card"{tuple_delimiter}"UserDetails"{tuple_delimiter}"Contains user details component"{tuple_delimiter}"RENDERS"{tuple_delimiter}6){record_delimiter}
+("content_keywords"{tuple_delimiter}"component composition, state management, async data fetching, conditional rendering"){completion_delimiter}
 #############################""",
 
     """Example 2:
 
-Entity_types: [component, hook, state, prop_type, ui_element, route, data_handler, style_definition, utility, test, mixpanel, filepath]
+Entity_types: [component, hook, state, prop_type, ui_element, route, data_handler, style_definition, utility, test]
 Text: 
-``` filepath: src/components/controls/PaddingSlider.jsx
-import {{ Slider }} from '@mui/material';
-import {{ useCallback }} from 'react';
-import {{ validatePadding }} from '../utils/validators';
+const useAuth = () => {{
+    const [user, setUser] = useState(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const navigate = useNavigate();
 
-const PaddingSlider = ({{ value, onChange, direction = 'all' }}) => {{
-    const handleChange = useCallback((event, newValue) => {{
-        if (validatePadding(newValue)) {{
-            onChange({{ direction, value: newValue }});
+    const login = async (credentials) => {{
+        try {{
+            const response = await authService.login(credentials);
+            setUser(response.user);
+            setIsAuthenticated(true);
+            navigate('/dashboard');
+        }} catch (error) {{
+            throw new Error('Authentication failed');
         }}
-    }}, [direction, onChange]);
+    }};
 
-    return (
-        <div className="padding-slider">
-            <label>{{`Padding ${{direction}}`}}</label>
-            <Slider
-                value={{value}}
-                onChange={{handleChange}}
-                min={{0}}
-                max={{100}}
-                step={{1}}
-            />
-        </div>
-    );
+    const logout = () => {{
+        setUser(null);
+        setIsAuthenticated(false);
+        navigate('/login');
+    }};
+
+    return {{ user, isAuthenticated, login, logout }};
 }};
-
-export default PaddingSlider;
-```
-
-``` filepath: src/components/utils/validators.js
-export const validatePadding = (value) => {{
-    return value >= 0 && value <= 100 && Number.isInteger(value);
-}};
-
-export const validateSpacing = (value) => {{
-    return value >= 0 && value <= 50 && Number.isInteger(value);
-}};
-```
+""" + """
 ################
 Output:
-("entity"{tuple_delimiter}"src/components/controls/PaddingSlider.jsx"{tuple_delimiter}"filepath"{tuple_delimiter}"File containing the PaddingSlider component for padding control"){record_delimiter}
-("entity"{tuple_delimiter}"src/components/utils/validators.js"{tuple_delimiter}"filepath"{tuple_delimiter}"Utility file containing validation functions for spacing and padding"){record_delimiter}
-("entity"{tuple_delimiter}"PaddingSlider"{tuple_delimiter}"component"{tuple_delimiter}"Control component for adjusting padding values. Accepts value, onChange, and direction props. Implements Material-UI Slider with validation."){record_delimiter}
-("entity"{tuple_delimiter}"handleChange"{tuple_delimiter}"data_handler"{tuple_delimiter}"Memoized callback function that validates and processes slider value changes"){record_delimiter}
-("entity"{tuple_delimiter}"Slider"{tuple_delimiter}"ui_element"{tuple_delimiter}"Material-UI Slider component used for input"){record_delimiter}
-("entity"{tuple_delimiter}"validatePadding"{tuple_delimiter}"utility"{tuple_delimiter}"Validation function that ensures padding values are integers between 0 and 100"){record_delimiter}
-("entity"{tuple_delimiter}"validateSpacing"{tuple_delimiter}"utility"{tuple_delimiter}"Validation function that ensures spacing values are integers between 0 and 50"){record_delimiter}
-("relationship"{tuple_delimiter}"src/components/controls/PaddingSlider.jsx"{tuple_delimiter}"PaddingSlider"{tuple_delimiter}"File contains PaddingSlider component implementation"{tuple_delimiter}"FILE_CONTAINS_FUNCTION"{tuple_delimiter}10){record_delimiter}
-("relationship"{tuple_delimiter}"src/components/utils/validators.js"{tuple_delimiter}"validatePadding"{tuple_delimiter}"File contains padding validation function"{tuple_delimiter}"FILE_CONTAINS_FUNCTION"{tuple_delimiter}10){record_delimiter}
-("relationship"{tuple_delimiter}"src/components/utils/validators.js"{tuple_delimiter}"validateSpacing"{tuple_delimiter}"File contains spacing validation function"{tuple_delimiter}"FILE_CONTAINS_FUNCTION"{tuple_delimiter}10){record_delimiter}
-("relationship"{tuple_delimiter}"PaddingSlider"{tuple_delimiter}"validatePadding"{tuple_delimiter}"Component uses validation function to verify padding values"{tuple_delimiter}"FILE_IMPORTS_FUNCTION"{tuple_delimiter}8){record_delimiter}
-("relationship"{tuple_delimiter}"PaddingSlider"{tuple_delimiter}"Slider"{tuple_delimiter}"Component uses Material-UI Slider for input"{tuple_delimiter}"IMPORTS,RENDERS"{tuple_delimiter}9){record_delimiter}
-("relationship"{tuple_delimiter}"PaddingSlider"{tuple_delimiter}"handleChange"{tuple_delimiter}"Component uses memoized handler for slider changes"{tuple_delimiter}"HANDLES_EVENT"{tuple_delimiter}8){record_delimiter}
-("relationship"{tuple_delimiter}"handleChange"{tuple_delimiter}"validatePadding"{tuple_delimiter}"Handler uses validation before updating values"{tuple_delimiter}"CALLS_HOOK"{tuple_delimiter}7){record_delimiter}
-("content_keywords"{tuple_delimiter}"UI controls, material-ui integration, callback memoization, controlled component, input validation, utility functions"){completion_delimiter}
+("entity"{tuple_delimiter}"useAuth"{tuple_delimiter}"hook"{tuple_delimiter}"CUSTOM_HOOK"{tuple_delimiter}"Custom authentication hook managing user session state and auth operations. Provides login/logout functionality and navigation."){record_delimiter}
+("entity"{tuple_delimiter}"user state"{tuple_delimiter}"state"{tuple_delimiter}"LOCAL_STATE"{tuple_delimiter}"useState hook managing logged-in user data. Null when logged out."){record_delimiter}
+("entity"{tuple_delimiter}"isAuthenticated state"{tuple_delimiter}"state"{tuple_delimiter}"LOCAL_STATE"{tuple_delimiter}"useState hook managing authentication status boolean."){record_delimiter}
+("entity"{tuple_delimiter}"login"{tuple_delimiter}"data_handler"{tuple_delimiter}"API_CALL"{tuple_delimiter}"Async function handling user login, updates state and navigates to dashboard."){record_delimiter}
+("entity"{tuple_delimiter}"logout"{tuple_delimiter}"data_handler"{tuple_delimiter}"EVENT_HANDLER"{tuple_delimiter}"Function handling user logout, clears state and navigates to login."){record_delimiter}
+("entity"{tuple_delimiter}"authService"{tuple_delimiter}"utility"{tuple_delimiter}"HELPER_FUNCTION"{tuple_delimiter}"Service utility for authentication API calls."){record_delimiter}
+("relationship"{tuple_delimiter}"useAuth"{tuple_delimiter}"user state"{tuple_delimiter}"UPDATES_STATE"{tuple_delimiter}"Hook manages user state through login/logout"{tuple_delimiter}9){record_delimiter}
+("relationship"{tuple_delimiter}"useAuth"{tuple_delimiter}"isAuthenticated state"{tuple_delimiter}"UPDATES_STATE"{tuple_delimiter}"Hook manages authentication status"{tuple_delimiter}9){record_delimiter}
+("relationship"{tuple_delimiter}"login"{tuple_delimiter}"authService"{tuple_delimiter}"CALLS_HOOK"{tuple_delimiter}"Login function calls authService.login"{tuple_delimiter}8){record_delimiter}
+("relationship"{tuple_delimiter}"useAuth"{tuple_delimiter}"navigate"{tuple_delimiter}"CALLS_HOOK"{tuple_delimiter}"Hook uses useNavigate for routing"{tuple_delimiter}7){record_delimiter}
+("content_keywords"{tuple_delimiter}"authentication, custom hooks, state management, routing, error handling"){completion_delimiter}
 #############################"""]
 
 PROMPTS[
     "summarize_entity_descriptions"
 ] = """You are a helpful assistant responsible for generating a comprehensive summary of the data provided below.
-Given React components, hooks, or other frontend entities, and a list of descriptions related to them.
+Given one or two React components, hooks, or other frontend entities, and a list of descriptions related to them.
 Please concatenate all of these into a single, comprehensive description. Make sure to include information collected from all the descriptions.
 If the provided descriptions are contradictory, please resolve the contradictions and provide a single, coherent summary.
 Make sure it is written in third person, and include the component/hook names so we have the full context.
